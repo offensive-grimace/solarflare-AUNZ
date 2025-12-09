@@ -15,17 +15,38 @@ namespace SolarFlare
 	class Program
 	{
 		internal static FlareData flare = new FlareData();
+		internal static string overrideUsername = null;
+		internal static string overridePassword = null;
+
 		static void Main(string[] args)
         {
 			Console.WriteLine("Don't look directly into the sun...");
 			Console.WriteLine("Tool created by Rob Fuller (@mubix)");
 			Console.WriteLine("============================================");
-			if(args.Length > 0)
+
+			// Parse command line arguments
+			string connectionStringFile = null;
+			for (int i = 0; i < args.Length; i++)
 			{
-				string path = args[0];
-				if(File.Exists(path))
+				if ((args[i] == "--username" || args[i] == "-u") && i + 1 < args.Length)
 				{
-					using (StreamReader streamReader = File.OpenText(path))
+					overrideUsername = args[++i];
+				}
+				else if ((args[i] == "--password" || args[i] == "-p") && i + 1 < args.Length)
+				{
+					overridePassword = args[++i];
+				}
+				else if (!args[i].StartsWith("-"))
+				{
+					connectionStringFile = args[i];
+				}
+			}
+
+			if (connectionStringFile != null)
+			{
+				if(File.Exists(connectionStringFile))
+				{
+					using (StreamReader streamReader = File.OpenText(connectionStringFile))
 					{
 						string text;
 						while (!streamReader.EndOfStream && (text = streamReader.ReadLine()) != null)
@@ -36,7 +57,7 @@ namespace SolarFlare
 				}
 				else
 				{
-					Console.WriteLine("File not found: " + path);
+					Console.WriteLine("File not found: " + connectionStringFile);
 					System.Environment.Exit(1);
 				}
 			}
@@ -44,6 +65,7 @@ namespace SolarFlare
 			{
 				Console.WriteLine(" A connection string file can be used by");
 				Console.WriteLine(" specifying the file path as an argument");
+				Console.WriteLine(" Use --username/-u and --password/-p to override SQL credentials");
 			}
 			Console.WriteLine("============================================");
 			Console.WriteLine("| Collecting RabbitMQ Erlang Cookie");
@@ -388,10 +410,14 @@ namespace SolarFlare
 				{
 					try
                     {
+						// Use override credentials if provided
+						string dbUser = overrideUsername ?? sql.DbUser;
+						string dbPass = overridePassword ?? sql.DbPass;
+
 						SqlConnection sqlconn = new SqlConnection();
-						sqlconn.ConnectionString = "Data Source=" + sql.DbHost + ";Initial Catalog=" + sql.DbDB + ";User ID=" + sql.DbUser + ";Password=" + sql.DbPass;
+						sqlconn.ConnectionString = "Data Source=" + sql.DbHost + ";Initial Catalog=" + sql.DbDB + ";User ID=" + dbUser + ";Password=" + dbPass;
 						sqlconn.ConnectionString += ";MultipleActiveResultSets=true";
-						if(sql.DBIntegratedSecurity == true)
+						if(sql.DBIntegratedSecurity == true && overrideUsername == null)
                         {
 							sqlconn.ConnectionString += $";Integrated Security={sql.DBIntegratedSecurityString}";
                         }
