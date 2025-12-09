@@ -417,7 +417,12 @@ namespace SolarFlare
 						SqlConnection sqlconn = new SqlConnection();
 						sqlconn.ConnectionString = "Data Source=" + sql.DbHost + ";Initial Catalog=" + sql.DbDB + ";User ID=" + dbUser + ";Password=" + dbPass;
 						sqlconn.ConnectionString += ";MultipleActiveResultSets=true";
-						if(sql.DBIntegratedSecurity == true && overrideUsername == null)
+						if(overrideUsername != null)
+						{
+							// Explicitly disable Integrated Security when using override credentials
+							sqlconn.ConnectionString += ";Integrated Security=False";
+						}
+						else if(sql.DBIntegratedSecurity == true)
                         {
 							sqlconn.ConnectionString += $";Integrated Security={sql.DBIntegratedSecurityString}";
                         }
