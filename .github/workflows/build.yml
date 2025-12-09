@@ -5,24 +5,25 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
 
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2.3.4
+    - uses: actions/checkout@v4
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
     - name: Restore NuGet packages
       run: nuget restore SolarFlare.sln
     - name: Build
       run: msbuild SolarFlare.sln /p:Configuration=Release
     - name: Create Release
-      id: create_release
-      uses: "marvinpinto/action-automatic-releases@latest"
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest"
-        title: Release ${{ github.sha }}
+        tag_name: latest
+        name: Release ${{ github.sha }}
         files: ./SolarFlare/bin/Release/SolarFlare.exe
-        prerelease: false
+        make_latest: true
